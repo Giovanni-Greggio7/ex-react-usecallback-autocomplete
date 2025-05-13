@@ -5,25 +5,33 @@ function App() {
   const [products, setProducts] = useState([])
   const [query, setQuery] = useState('')
 
+  function debounce(callback, delay){
+    let timer
+    return ((value) => {
+      clearTimeout(timer)
+      timer = setTimeout(() => {
+        callback(value)
+      }, delay)
+    })
+  }
 
-  const fetchProducts = (query) => {
+  const fetchProducts = useCallback(debounce((query) => {
     fetch(`http://localhost:5001/products?search=${query}`)
       .then(response => response.json())
       .then(data => setProducts(data))
       .catch(error => console.error(error))
-  }
+      console.log(query)
+  }, 300), [])
 
-  console.log(products)
+  console.log(query)
 
   useEffect(() => {
+    if(query.trim() == ''){
+      setProducts([])
+      return
+    }
     fetchProducts(query)
   }, [query])
-
-  const filterProducts = useMemo(() => {
-    const lowerSearch = query.toLowerCase()
-    return products.filter(p => p.name.toLowerCase().includes(lowerSearch) ||
-      p.description.toLowerCase().includes(lowerSearch))
-  }, [products, query])
 
   return (
     <>
@@ -37,7 +45,7 @@ function App() {
       <div>
         <h3>Lista prodotti</h3>
         <ul>
-        {filterProducts.map(p => {
+        {products.map(p => {
           return (
             <li key={p.id}>
               <p><strong>{p.name}</strong></p>
@@ -48,8 +56,6 @@ function App() {
         })}
         </ul>
       </div>
-
-
     </>
   )
 }
